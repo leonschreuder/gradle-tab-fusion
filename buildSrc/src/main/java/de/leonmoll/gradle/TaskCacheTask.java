@@ -77,9 +77,6 @@ public class TaskCacheTask extends AbstractReportTask {
         aggregateModel.build();
 
         return aggregateModel;
-//        DefaultGroupTaskReportModel model = new DefaultGroupTaskReportModel();
-//        model.build(aggregateModel);
-//        return model;
     }
 
     private void aggregateTasksFromProject(Project project) {

@@ -17,11 +17,16 @@ package de.leonmoll.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.tasks.TaskContainer;
 
 public class TaskCachePlugin implements Plugin<Project> {
     //Reference: github.com/gradle/gradle -> ProjectReportsPlugin.java
 
     public void apply(Project project) {
-        project.getTasks().create("cacheTaskList", TaskCacheTask.class);
+        TaskContainer taskContainer = project.getTasks();
+
+        TaskCacheTask cacheTask = taskContainer.create("cacheTaskList", TaskCacheTask.class);
+
+        taskContainer.getByName("assemble").dependsOn(cacheTask);
     }
 }
