@@ -1,15 +1,24 @@
+/*
+ * Copyright 2017 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.leonmoll.gradle;
 
 import org.gradle.api.Project;
 import org.gradle.api.internal.project.ProjectTaskLister;
 import org.gradle.api.tasks.diagnostics.AbstractReportTask;
-import org.gradle.api.tasks.diagnostics.internal.AggregateMultiProjectTaskReportModel;
-import org.gradle.api.tasks.diagnostics.internal.DefaultGroupTaskReportModel;
-import org.gradle.api.tasks.diagnostics.internal.ReportRenderer;
-import org.gradle.api.tasks.diagnostics.internal.SingleProjectTaskReportModel;
-import org.gradle.api.tasks.diagnostics.internal.TaskDetails;
-import org.gradle.api.tasks.diagnostics.internal.TaskDetailsFactory;
-import org.gradle.api.tasks.diagnostics.internal.TaskReportRenderer;
+import org.gradle.api.tasks.diagnostics.internal.*;
 
 import javax.inject.Inject;
 import java.io.BufferedWriter;
@@ -20,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TaskCacheTask extends AbstractReportTask {
-    private TaskReportRenderer renderer = new TaskReportRenderer();
+    //Reference: github.com/gradle/gradle -> TaskReportTask.java
 
     private AggregateMultiProjectTaskReportModel aggregateModel;
     private TaskDetailsFactory taskDetailsFactory;
@@ -30,14 +39,14 @@ public class TaskCacheTask extends AbstractReportTask {
 
     @Override
     public ReportRenderer getRenderer() {
-        return new TaskReportRenderer(); // Sure, this is violates LSP, but i'm not really rendering any reports anyway
+        return new EmptyReportRenderer(); // Sure, this is violates LSP, but i'm not really rendering any reports anyway
     }
 
     @Override
     public void generate(Project project) throws IOException {
         List<String> taskList = new ArrayList<String>();
 
-        DefaultGroupTaskReportModel model = buildReportModelForAllTasks(project);
+        TaskReportModel model = buildReportModelForAllTasks(project);
 
         for (String group : model.getGroups()) {
             for (TaskDetails task : model.getTasksForGroup(group)) {
@@ -49,12 +58,12 @@ public class TaskCacheTask extends AbstractReportTask {
         writeStringToFile(outFile, String.join(" ", taskList));
 
         //TODO: Completion for rules probably needs more complex logic, implement if actually needed
-//        for (Rule rule : project.getTasks().getRules()) {
-//            project.getLogger().lifecycle(rule.getDescription());
-//        }
+        //for (Rule rule : project.getTasks().getRules()) {
+        //    project.getLogger().lifecycle(rule.getDescription());
+        //}
     }
 
-    private DefaultGroupTaskReportModel buildReportModelForAllTasks(Project project) {
+    private TaskReportModel buildReportModelForAllTasks(Project project) {
         //Create task model in which those for all projects are combinde
         aggregateModel = new AggregateMultiProjectTaskReportModel(false, true);
         taskDetailsFactory = new TaskDetailsFactory(project);
@@ -67,9 +76,10 @@ public class TaskCacheTask extends AbstractReportTask {
 
         aggregateModel.build();
 
-        DefaultGroupTaskReportModel model = new DefaultGroupTaskReportModel();
-        model.build(aggregateModel);
-        return model;
+        return aggregateModel;
+//        DefaultGroupTaskReportModel model = new DefaultGroupTaskReportModel();
+//        model.build(aggregateModel);
+//        return model;
     }
 
     private void aggregateTasksFromProject(Project project) {
@@ -102,4 +112,5 @@ public class TaskCacheTask extends AbstractReportTask {
     protected ProjectTaskLister getProjectTaskLister() {
         throw new UnsupportedOperationException();
     }
+
 }
