@@ -2,16 +2,12 @@ package de.leonmoll.gradle;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.gradle.internal.impldep.org.codehaus.plexus.util.FileUtils.mkdir;
 import static org.junit.Assert.*;
@@ -39,7 +35,7 @@ public class CommandlineFlagsTaskTest {
         ByteArrayOutputStream cmdOutput = new ByteArrayOutputStream();
         cmdOutput.write(input.getBytes());
 
-        List<String> flags = flagsTask.parseOutput(cmdOutput);
+        List<String> flags = flagsTask.parseHelpOutput(cmdOutput);
 
         assertEquals(Arrays.asList("--help", "--something"), flags);
     }
@@ -50,7 +46,7 @@ public class CommandlineFlagsTaskTest {
 
         CommandlineFlagsTask flagsTask = (CommandlineFlagsTask) project.getTasks().getByName("cacheCommandlineFlags");
 
-        List<String> flags = flagsTask.parseOutput(bos);
+        List<String> flags = flagsTask.parseHelpOutput(bos);
 
         assertEquals(Arrays.asList("-?","-h","--help","-a","--no-rebuild","-b","--build-file","-c","--settings-file","--configure-on-demand","--console","--continue","-D","--system-prop","-d","--debug","--daemon","--foreground","-g","--gradle-user-home","--gui","-I","--init-script","-i","--info","--include-build","-m","--dry-run","--max-workers","--no-daemon","--offline","-P","--project-prop","-p","--project-dir","--parallel","--profile","--project-cache-dir","-q","--quiet","--recompile-scripts","--refresh-dependencies","--rerun-tasks","-S","--full-stacktrace","-s","--stacktrace","--status","--stop","-t","--continuous","-u","--no-search-upward","-v","--version","-x","--exclude-task"), flags);
     }

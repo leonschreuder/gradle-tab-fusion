@@ -27,13 +27,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TaskCacheTask extends AbstractReportTask {
+    private static final String TASKS_CACHE_FILE = "tasks.txt";
     //Reference: github.com/gradle/gradle -> TaskReportTask.java
 
     private AggregateMultiProjectTaskReportModel aggregateModel;
     private TaskDetailsFactory taskDetailsFactory;
-
-    public void apply(Project project) {
-    }
 
     @Override
     public ReportRenderer getRenderer() {
@@ -52,7 +50,7 @@ public class TaskCacheTask extends AbstractReportTask {
             }
         }
 
-        File outFile = new File(project.getBuildDir(), "tasks.txt");
+        File outFile = new File(project.getBuildDir(), TASKS_CACHE_FILE);
         FileUtils.writeStringToFile(outFile, String.join(" ", taskList));
 
         //TODO: Completion for rules probably needs more complex logic, implement if actually needed

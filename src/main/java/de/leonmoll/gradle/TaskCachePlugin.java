@@ -17,11 +17,7 @@ package de.leonmoll.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
-import org.gradle.api.tasks.Exec;
 import org.gradle.api.tasks.TaskContainer;
-
-import java.io.*;
 
 public class TaskCachePlugin implements Plugin<Project> {
     //Reference: github.com/gradle/gradle -> ProjectReportsPlugin.java
@@ -34,12 +30,5 @@ public class TaskCachePlugin implements Plugin<Project> {
 
 
         taskContainer.create("cacheCommandlineFlags", CommandlineFlagsTask.class);
-
-
-//        System.out.println("TESTESTES2");
-//        CommandLineActionFactory f = new org.gradle.launcher.cli.CommandLineActionFactory();
-//        CommandLineParser cliParser = new CommandLineParser();
-//        cliParser.parse("-h");
-//        cliParser.printUsage(System.out);
     }
 }
