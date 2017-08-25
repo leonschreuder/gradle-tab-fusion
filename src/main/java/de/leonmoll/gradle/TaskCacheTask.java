@@ -21,9 +21,7 @@ import org.gradle.api.tasks.diagnostics.AbstractReportTask;
 import org.gradle.api.tasks.diagnostics.internal.*;
 
 import javax.inject.Inject;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +53,7 @@ public class TaskCacheTask extends AbstractReportTask {
         }
 
         File outFile = new File(project.getBuildDir(), "tasks.txt");
-        writeStringToFile(outFile, String.join(" ", taskList));
+        FileUtils.writeStringToFile(outFile, String.join(" ", taskList));
 
         //TODO: Completion for rules probably needs more complex logic, implement if actually needed
         //for (Rule rule : project.getTasks().getRules()) {
@@ -83,26 +81,6 @@ public class TaskCacheTask extends AbstractReportTask {
         SingleProjectTaskReportModel projectTaskModel = new SingleProjectTaskReportModel(taskDetailsFactory);
         projectTaskModel.build(getProjectTaskLister().listProjectTasks(project));
         aggregateModel.add(projectTaskModel);
-    }
-
-    private void writeStringToFile(File outFile, String fileContentString) {
-        BufferedWriter bw = null;
-        FileWriter fw = null;
-
-        try {
-            fw = new FileWriter(outFile);
-            bw = new BufferedWriter(fw);
-            bw.write(fileContentString);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (bw != null) bw.close();
-                if (fw != null) fw.close();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        }
     }
 
     @Inject

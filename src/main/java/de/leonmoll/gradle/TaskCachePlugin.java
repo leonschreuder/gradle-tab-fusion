@@ -34,30 +34,6 @@ public class TaskCachePlugin implements Plugin<Project> {
 
 
         taskContainer.create("cacheCommandlineFlags", CommandlineFlagsTask.class);
-//        taskContainer.create("cacheCommandlineFlags", task -> {
-//            ByteArrayOutputStream cmdOutput = new ByteArrayOutputStream();
-//            project.exec(execSpec -> {
-//                execSpec.executable("./gradlew");
-//                execSpec.args("--help");
-//                execSpec.setStandardOutput(cmdOutput);
-//            });
-//
-//            File outFile = new File(project.getBuildDir(), "flags.txt");
-//            OutputStream outputStream = null;
-//            try {
-//                outputStream = new FileOutputStream(outFile);
-//                cmdOutput.writeTo(outputStream);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }  finally {
-//                if (outputStream != null) try {
-//                    outputStream.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        });
-
 
 
 //        System.out.println("TESTESTES2");
