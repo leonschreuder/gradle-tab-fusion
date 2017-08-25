@@ -24,14 +24,14 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
 }
 
-gradle.taskGraph.whenReady {
-    tasks.forEach { Task task ->
-        println "t:" + task.name
-    }
+// gradle.taskGraph.whenReady {
+//     tasks.forEach { Task task ->
+//         println "t:" + task.name
+//     }
     //gradle.taskGraph.allTasks.each { Task task ->
     //    println "t:" + task.name
     //}
-}
+// }
 
 //tasks.asList().forEach { Task task ->
 //}

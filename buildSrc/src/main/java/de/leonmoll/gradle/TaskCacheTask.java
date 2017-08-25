@@ -18,66 +18,78 @@ import javax.inject.Inject;
 import java.io.IOException;
 
 public class TaskCacheTask extends AbstractReportTask {
-    private TaskReportRenderer renderer = new TaskReportRenderer();
+//    private TaskReportRenderer renderer = new TaskReportRenderer();
 
-    private boolean detail;
+//    private boolean detail;
+    private AggregateMultiProjectTaskReportModel aggregateModel;
+    private TaskDetailsFactory taskDetailsFactory;
 
     public void apply(Project project) {
     }
 
     @Override
     public ReportRenderer getRenderer() {
-        return renderer;
+        return new TaskReportRenderer(); // Sure, this is violates LSP, but i'm not really rendering any reports anyway
     }
 
-    public void setRenderer(TaskReportRenderer renderer) {
-        this.renderer = renderer;
-    }
+//    public void setRenderer(TaskReportRenderer renderer) {
+//        this.renderer = renderer;
+//    }
 
-    @Option(option = "all", description = "Show additional tasks and detail.")
-    public void setShowDetail(boolean detail) {
-        this.detail = detail;
-    }
+//    @Option(option = "all", description = "Show additional tasks and detail.")
+//    public void setShowDetail(boolean detail) {
+//        this.detail = detail;
+//    }
 
-    @Console
-    public boolean isDetail() {
-        return detail;
-    }
+//    @Console
+//    public boolean isDetail() {
+//        return detail;
+//    }
 
     @Override
     public void generate(Project project) throws IOException {
-        renderer.showDetail(isDetail());
-        renderer.addDefaultTasks(project.getDefaultTasks());
+        //setShowDetail(true);
+        //renderer.showDetail(isDetail());
+        //renderer.addDefaultTasks(project.getDefaultTasks()); //defaultTasks is empty
 
-        AggregateMultiProjectTaskReportModel aggregateModel = new AggregateMultiProjectTaskReportModel(!isDetail(), isDetail());
-        TaskDetailsFactory taskDetailsFactory = new TaskDetailsFactory(project);
+        DefaultGroupTaskReportModel model = buildModelForAllTasks(project);
 
-        SingleProjectTaskReportModel projectTaskModel = new SingleProjectTaskReportModel(taskDetailsFactory);
-        projectTaskModel.build(getProjectTaskLister().listProjectTasks(project));
-        aggregateModel.add(projectTaskModel);
+        for (String group : model.getGroups()) {
+            //renderer.startTaskGroup(group); //only prints headers
+            for (TaskDetails task : model.getTasksForGroup(group)) {
+                project.getLogger().lifecycle(task.getPath().toString());
+                //renderer.addTask(task);
+            }
+        }
+        //renderer.completeTasks();
+
+        //for (Rule rule : project.getTasks().getRules()) {
+        //    renderer.addRule(rule);
+        //}
+    }
+
+    private DefaultGroupTaskReportModel buildModelForAllTasks(Project project) {
+        //Create task model in which those for all projects are combinde
+        aggregateModel = new AggregateMultiProjectTaskReportModel(false, true);
+        taskDetailsFactory = new TaskDetailsFactory(project);
+
+        aggregateTasksFromProject(project);
 
         for (Project subproject : project.getSubprojects()) {
-            SingleProjectTaskReportModel subprojectTaskModel = new SingleProjectTaskReportModel(taskDetailsFactory);
-            subprojectTaskModel.build(getProjectTaskLister().listProjectTasks(subproject));
-            aggregateModel.add(subprojectTaskModel);
+            aggregateTasksFromProject(subproject);
         }
 
         aggregateModel.build();
 
         DefaultGroupTaskReportModel model = new DefaultGroupTaskReportModel();
         model.build(aggregateModel);
+        return model;
+    }
 
-        for (String group : model.getGroups()) {
-            renderer.startTaskGroup(group);
-            for (TaskDetails task : model.getTasksForGroup(group)) {
-                renderer.addTask(task);
-            }
-        }
-        renderer.completeTasks();
-
-        for (Rule rule : project.getTasks().getRules()) {
-            renderer.addRule(rule);
-        }
+    private void aggregateTasksFromProject(Project project) {
+        SingleProjectTaskReportModel projectTaskModel = new SingleProjectTaskReportModel(taskDetailsFactory);
+        projectTaskModel.build(getProjectTaskLister().listProjectTasks(project));
+        aggregateModel.add(projectTaskModel);
     }
 
     @Inject
