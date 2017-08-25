@@ -44,7 +44,7 @@ public class TaskCacheTask extends AbstractReportTask {
 
     @Override
     public void generate(Project project) throws IOException {
-        List<String> taskList = new ArrayList<String>();
+        List<String> taskList = new ArrayList<>();
 
         TaskReportModel model = buildReportModelForAllTasks(project);
 
