@@ -76,129 +76,31 @@ getGradleCommand() {
 #================================================================================
 
 buildCacheIfRequired() {
-    if [[ $(hasCache) -ne 0 ]]; then
+    if [[ $(hasCacheFiles) -ne 0 ]]; then
 
-        local msg="  (Just a sec. Building cache...)"
+        local msg="  (Caches not found. Telling gradle to generate cache...)"
         local msgLength=${#msg}
         backspaces=$(printf '\b%.0s' $(seq 1 $msgLength))
         spaces=$(printf ' %.0s' $(seq 1 $msgLength))
 
         echo -en "$msg$backspaces"      # Prints the message and moves the cursor back
 
-        buildCache
+        requestGradleBuildsCaches
 
         echo -en "$spaces$backspaces"   # Overwrites the message with spaces, moving the cursor back again
     fi
 }
 
-hasCache() {
-    grep -q $(getGradleChangesHash) "$CASHE_FILE" >& /dev/null
-    echo $?
-}
-
-getGradleChangesHash() {
-    if hash git 2>/dev/null; then
-        find . -name "*.gradle" -type f 2> /dev/null \
-            | xargs cat \
-            | git hash-object --stdin
-    elif hash md5 2>/dev/null; then
-        # use md5 for hashing (Mac OS X)
-        find . -name "*.gradle" -type f 2> /dev/null \
-            | xargs cat \
-            | md5
-    else
-        # use md5sum for hashing (Linux)
-        find . -name "*.gradle" -type f 2> /dev/null \
-            | xargs cat \
-            | md5sum \
-            | cut -f1 -d' '
-    fi
+hasCacheFiles() {
+    [[ -s ./build/tasks.cache && -s ./build/cmdlineflags.cache ]] && echo 0 || echo 2
 }
 
 # Building Cache
 #------------------------------------------------------------
 
-buildCache() {
-    tasks="$(requestTasksFromGradle)"
-    flags="$(requestFlagsFromGradle)"
-    if [[ $tasks != '' && $flags != '' ]]; then
-        writeTasksToCache "$tasks $flags"
-    else
-        # one of the requests returned empty. Probably a broken build file.
-        >&2 echo "[ERROR] Error building completion cache. Is your build script broken?"
-    fi
-}
-
-requestTasksFromGradle() {
-    local outputOfTasksCommand=$($(getGradleCommand) tasks --console plain --all --quiet --offline)
-    echo $(parseOutputOfTasksCommand "$outputOfTasksCommand")
-}
-
-# Reading every line so we also catch tasks without a description
-parseOutputOfTasksCommand() {
-    local commands=''
-    local readingTasks=0
-    local lastLineEmpty=1 # The command output has a title that starts with a line of dashes
-    while read -r line || [[ -n $line ]]; do
-        if [[ $line == "--"* && $lastLineEmpty == 0 ]]; then
-            readingTasks=1
-        elif [[ $line != *[![:space:]]* ]]; then
-            readingTasks=0
-            lastLineEmpty=1
-        else
-            lastLineEmpty=0
-            if [[ $readingTasks == 1 ]]; then
-                if [[ $line != "Pattern:"* ]]; then
-                    commands="$commands ${line%\ -\ *}"
-                fi
-            fi
-        fi
-    done <<< "$@"
-
-    echo $commands
-}
-
-requestFlagsFromGradle() {
-    local outputOfGradleHelp=$($(getGradleCommand) --help)
-    echo $(parseOutputOfGradleHelp "$outputOfGradleHelp")
-}
-
-parseOutputOfGradleHelp() {
-    local result=''
-    while read -r line || [[ -n $line ]]; do
-        if [[ $line == -* ]]; then
-            cmd=${line%\ \ *}   # remove suffix till multiple spaces
-            cmd=${cmd//,/}      # now also remove commas
-            result="$result $cmd"
-        fi
-    done <<< "$@"
-    echo $result
-}
-
-writeTasksToCache() {
-    local newLine="$(pwd)|$(getGradleChangesHash)|$@"
-    if [ -s $CASHE_FILE ]; then
-        # we have a cache already. Read it and replace the existing cache for this dir
-        local i=0
-        while read cacheLine || [[ -n $cacheLine ]]; do
-            local i=$((i+1))
-            if [[ $cacheLine == "$cwd"* ]]; then
-                replaceLineNumberInFileWith $i $CASHE_FILE "$newLine"
-                return 0
-            fi
-        done <<< $CASHE_FILE
-    fi
-    # If there was no file or the file did not have a cache for this dir, we add it here
-    echo $newLine >> $CASHE_FILE
-}
-
-replaceLineNumberInFileWith() {
-    if echo "$(sed -i 2>&1 )" | grep -q "option requires an argument"; then
-        # That's BSD sed, the osx default
-        sed -i '' "${1}s#.*#$3#" $2
-    else
-        sed -i "${1}s#.*#$3#" $2
-    fi
+requestGradleBuildsCaches() {
+    # Outputs nothing unless errors occurr
+    $(getGradleCommand) cacheTaskList cacheCommandlineFlags --quiet --offline
 }
 
 # Reading Cache

@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TaskCacheTask extends AbstractReportTask {
-    private static final String TASKS_CACHE_FILE = "tasks.txt";
+    private static final String TASKS_CACHE_FILE = "tasks.cache";
     //Reference: github.com/gradle/gradle -> TaskReportTask.java
 
     private AggregateMultiProjectTaskReportModel aggregateModel;
