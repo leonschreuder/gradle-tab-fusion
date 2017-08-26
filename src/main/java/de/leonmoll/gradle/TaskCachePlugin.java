@@ -31,6 +31,8 @@ public class TaskCachePlugin implements Plugin<Project> {
         CommandlineFlagsTask flagsCacheTask = taskContainer.create("cacheCommandlineFlags", CommandlineFlagsTask.class);
         taskContainer.getByName("assemble").dependsOn(flagsCacheTask);
 
+        taskContainer.create("installTabCompletion", InstallerTask.class);
+
         //TODO: Add up-to-date checks for both
     }
 }

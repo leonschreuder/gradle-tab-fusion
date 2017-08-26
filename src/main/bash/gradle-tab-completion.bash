@@ -91,7 +91,7 @@ getFlagsCacheFile() {
 
 requestGradleBuildsCaches() {
     # Outputs nothing unless errors occurr
-    $(getGradleCommand) cacheTaskList cacheCommandlineFlags --quiet --offline
+    $(getGradleCommand) cacheTaskList cacheCommandlineFlags  --console plain --quiet --offline 
 }
 
 getGradleCommand() {

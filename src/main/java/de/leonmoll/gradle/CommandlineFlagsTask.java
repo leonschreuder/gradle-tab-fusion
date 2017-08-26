@@ -51,6 +51,8 @@ public class CommandlineFlagsTask extends DefaultTask {
 
     protected List<String> parseHelpOutput(ByteArrayOutputStream bos) {
         BufferedReader bufferedReader;
+        BufferedWriter bw = null;
+        FileWriter fw = null;
         ArrayList<String> result  = new ArrayList<>();
 
         try {
