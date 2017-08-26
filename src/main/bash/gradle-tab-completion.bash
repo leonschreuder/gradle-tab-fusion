@@ -3,19 +3,9 @@
 # https://github.com/eriwen/gradle-completion       # Other completion engine I found later
 
 
-CASHE_FILE=".gradle/.gradle_completion_cash"
-
-if [ -n "$GRADLE_USER_HOME" ] ; then
-    CASHE_FILE="$GRADLE_USER_HOME/$CASHE_FILE"
-else
-    if [[ $(uname) = MINGW* || $(uname) = CYGWIN* ]] ; then
-        # On windows (gitbash or cygwin)
-        CASHE_FILE="$USERPROFILE/$CASHE_FILE"
-    else
-        # Some sys-admins like to set home somewhere special, so try it last
-        CASHE_FILE="$HOME/$CASHE_FILE"
-    fi
-fi
+_TASKS_CACHE_FILE="tasks.cache"
+_COMMANDLINEFLAGS_CACHE_FILE="cmdlineflags.cache"
+_BUILD_FOLDER="build"   #TODO: Should this be configurable?
 
 
 # Main
@@ -62,14 +52,6 @@ setCompletionFor() {
     [[ -n "$(type -t __ltrim_colon_completions)" ]] && __ltrim_colon_completions "$cur"
 }
 
-getGradleCommand() {
-    local gradle_cmd='gradle'
-    if [[ -x ./gradlew ]]; then
-        gradle_cmd='./gradlew'
-    fi
-    echo $gradle_cmd
-}
-
 
 
 # Caching
@@ -92,8 +74,17 @@ buildCacheIfRequired() {
 }
 
 hasCacheFiles() {
-    [[ -s ./build/tasks.cache && -s ./build/cmdlineflags.cache ]] && echo 0 || echo 2
+    [[ -s $(getTasksCacheFile) && -s $(getFlagsCacheFile) ]] && echo 0 || echo 2
 }
+
+getTasksCacheFile() {
+    echo ./$_BUILD_FOLDER/$_TASKS_CACHE_FILE
+}
+
+getFlagsCacheFile() {
+    echo ./$_BUILD_FOLDER/$_COMMANDLINEFLAGS_CACHE_FILE
+}
+
 
 # Building Cache
 #------------------------------------------------------------
@@ -103,50 +94,53 @@ requestGradleBuildsCaches() {
     $(getGradleCommand) cacheTaskList cacheCommandlineFlags --quiet --offline
 }
 
+getGradleCommand() {
+    local gradle_cmd='gradle'
+    if [[ -x ./gradlew ]]; then
+        gradle_cmd='./gradlew'
+    fi
+    echo $gradle_cmd
+}
+
 # Reading Cache
 #------------------------------------------------------------
 
 getCommandsForCurrentDirFromCache() {
     currentInput=$1
-    commands=$(getCommandsFromCache)
 
     # Only show dash commands when expicitly typed to keep it simple
     if [[ $currentInput == "-"* ]]; then
+        commands=$(readFlagsCache)
         if [[ $currentInput != "--"* ]]; then
             commands=$(filterSingleDashCommands "$commands")
         # else
-            # The user typed a double dash already, completion will filter the single-dashed results out
+            # The user typed a double dash already, completion will filter the single-dashed results out for us
         fi
     else
-        commands=${commands// -*/}
+        commands=$(readTaskCache)
     fi
     # >&2 echo -e "\n commands=$commands"
 
     echo $commands
 }
 
-getCommandsFromCache() {
-    cache=$(readCacheForCwd)
-    if [[ $cache != '' ]]; then
-        IFS='|' read -ra resultArray <<< "$cache"
-
-        # Return the tasks only if the cache is up to date
-        currentHash=$(getGradleChangesHash)
-        if [[ ${resultArray[1]} == $currentHash ]]; then
-            echo ${resultArray[2]}
-        fi
+readTaskCache() {
+    local cacheFile="$(getTasksCacheFile)"
+    if [ -s $cacheFile ]; then
+        while read cacheLine || [[ -n $cacheLine ]]; do
+            echo $cacheLine
+            return 0
+        done < "$cacheFile"
     fi
 }
 
-readCacheForCwd() {
-    local cwd=$(pwd)
-    if [ -s $CASHE_FILE ]; then
+readFlagsCache() {
+    local cacheFile="$(getFlagsCacheFile)"
+    if [ -s $cacheFile ]; then
         while read cacheLine || [[ -n $cacheLine ]]; do
-            if [[ $cacheLine == "$cwd"* ]]; then
-                echo $cacheLine
-                return 0
-            fi
-        done < "$CASHE_FILE"
+            echo $cacheLine
+            return 0
+        done < "$cacheFile"
     fi
 }
 

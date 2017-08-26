@@ -3,12 +3,10 @@
 setup() {
     ORIG_WD=$(pwd)
     source ./gradle-tab-completion.bash
-    CASHE_FILE="testCache"
+    mkdir build
 }
 
 teardown() {
-    rm -f $CASHE_FILE
-
     rm -rf build
     rm -f gradlew build.gradle settings.gradle
 }
@@ -78,63 +76,36 @@ test__should_support_gradle_wrapper() {
 #================================================================================
 
 test__should_be_able_to_see_if_has_cache_files() {
-    mkdir build
-
     assertEquals 2 $(hasCacheFiles)
 
-    echo "atask" > ./build/tasks.cache
+    echo "atask" > $(getTasksCacheFile)
     assertEquals 2 $(hasCacheFiles)
 
-    echo "--flag" > ./build/cmdlineflags.cache
+    echo "--flag" > $(getFlagsCacheFile)
     assertEquals 0 $(hasCacheFiles)
 }
-
-# Building Cache
-#------------------------------------------------------------
 
 # Reading Cache
 #------------------------------------------------------------
 
-# test__should_hide_flags_when_reading_cache_for_task() {
-#     tasks='testA testB btest module:project'
-#     commands="$tasks -h -? --help --version"
-#     writeTasksToCache "$commands"
+test__should_hide_flags_when_reading_cache_for_task() {
+    tasks='testA testB btest test-api test-bl module:project'
+    flags="-h -? --help --version"
+    echo "$tasks" > $(getTasksCacheFile)
+    echo "$flags" > $(getFlagsCacheFile)
 
-#     result=$(getCommandsForCurrentDirFromCache)
+    result=$(getCommandsForCurrentDirFromCache)
 
-#     assertEquals "$tasks" "$result"
-# }
+    assertEquals "$tasks" "$result"
+}
 
-# test__should_show_dashed_tasks() {
-#     tasks='testA testB btest test-api test-bl module:project'
-#     commands="$tasks -h -? --help --version"
-#     writeTasksToCache "$commands"
+test__should_show_single_dash_commands() {
+    tasks='testA testB btest test-api test-bl module:project'
+    flags="-h -? --help --version"
+    echo "$tasks" > $(getTasksCacheFile)
+    echo "$flags" > $(getFlagsCacheFile)
 
-#     result=$(getCommandsForCurrentDirFromCache)
+    result=$(getCommandsForCurrentDirFromCache '-')
 
-#     assertEquals "$tasks" "$result"
-# }
-
-# test__should_hide_double_dash_commands_when_current_prefix_is_dash() {
-#     commands='testA btest module:project -h -? --help --version testB'
-#     writeTasksToCache "$commands"
-
-#     result=$(getCommandsForCurrentDirFromCache '-')
-
-#     assertEquals "-h -?" "$result"
-# }
-
-# test_should_read_and_write_from_cache_correctly() {
-#     tasks='testA testB btest module:project'
-#     writeTasksToCache $tasks
-
-#     result=$(getCommandsFromCache)
-
-#     assertEquals "$tasks" "$result"
-# }
-
-# test__reading_from_empty_cache_should_return_empty_string() {
-#     local result=$(readCacheForCwd)
-
-#     assertEquals '' $result
-# }
+    assertEquals "-h -?" "$result"
+}
