@@ -25,10 +25,12 @@ public class TaskCachePlugin implements Plugin<Project> {
     public void apply(Project project) {
         TaskContainer taskContainer = project.getTasks();
 
-        TaskCacheTask cacheTask = taskContainer.create("cacheTaskList", TaskCacheTask.class);
-        taskContainer.getByName("assemble").dependsOn(cacheTask);
+        TaskCacheTask taskCacheTask = taskContainer.create("cacheTaskList", TaskCacheTask.class);
+        taskContainer.getByName("assemble").dependsOn(taskCacheTask);
 
+        CommandlineFlagsTask flagsCacheTask = taskContainer.create("cacheCommandlineFlags", CommandlineFlagsTask.class);
+        taskContainer.getByName("assemble").dependsOn(flagsCacheTask);
 
-        taskContainer.create("cacheCommandlineFlags", CommandlineFlagsTask.class);
+        //TODO: Add up-to-date checks for both
     }
 }
