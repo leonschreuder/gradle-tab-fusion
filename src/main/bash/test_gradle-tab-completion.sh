@@ -28,20 +28,26 @@ test__completion_should_complete_from_prefix() {
 }
 
 test__completion_should_support_colons() {
-    setCompletionFor "" ":" ":taska :taskb"
-    assertEquals ':taska :taskb' "${COMPREPLY[*]}"
+    # completes full-tasks before colon
+    setCompletionFor "" "taska" "taska:tasks taska:dependencies"
+    assertEquals 'taska:tasks taska:dependencies' "${COMPREPLY[*]}"
 
+    # completes sub-module tasks only, after a colon
     setCompletionFor "" "module:" "module:taska module:taskb"
-    assertEquals 'module:taska module:taskb' "${COMPREPLY[*]}"
+    assertEquals 'taska taskb' "${COMPREPLY[*]}"
 }
 
 test__completion_should_support_file_path_completion() {
     # listing files and dirs
     setCompletionFor "-I" "./t/" ""
-    assertEquals './t/help.out ./t/tasks-full.out' "${COMPREPLY[*]}"
+    assertEquals 2 "${#COMPREPLY[*]}"
+    [[ "${COMPREPLY[*]}" == *"./t/help.out"* ]] || fail "'${COMPREPLY[*]}' does not contain ./t/help.out"
+    [[ "${COMPREPLY[*]}" == *"./t/tasks-full.out"* ]] || fail "'${COMPREPLY[*]}' does not contain ./t/tasks-full.out"
 
     setCompletionFor "--build-file" "./t/" ""       # Last flag to make sure the case-syntax is correct
-    assertEquals './t/help.out ./t/tasks-full.out' "${COMPREPLY[*]}"
+    assertEquals 2 "${#COMPREPLY[*]}"
+    [[ "${COMPREPLY[*]}" == *"./t/help.out"* ]] || fail "'${COMPREPLY[*]}' does not contain ./t/help.out"
+    [[ "${COMPREPLY[*]}" == *"./t/tasks-full.out"* ]] || fail "'${COMPREPLY[*]}' does not contain ./t/tasks-full.out"
 }
 
 test__completion_should_support_dir_path_completion() {
@@ -59,8 +65,8 @@ test__should_support_default_gradle_installation() {
 }
 
 test__should_support_gradle_wrapper() {
-    touch ./gradlew
-    chmod +x ./gradlew
+    echo '#!/bin/bash' > gradlew    # Hashbang to make it executable in git-bash
+    chmod +x ./gradlew              # For *nix
 
     local result=$(getGradleCommand)
 
@@ -88,10 +94,8 @@ test__should_refresh_outdated_cache() {
 test__should_get_all_commands_from_gadle_tasks_output() {
     result=$(parseOutputOfTasksCommand "$(cat ./t/tasks-full.out)")
 
-    exp='assemble build classes compileJava processResources clean testClasses compileTestJava processTestResources init wrapper javadoc buildEnvironment module:buildEnvironment components module:components model module:model projects module:projects properties module:properties tasks module:tasks check test syntastic install justSomeTask'
-    if [[ $result != $exp ]]; then
-        fail "expected: '$exp'\n    got: '$result'"
-    fi
+    exp='assemble build classes compileJava processResources clean testClasses compileTestJava processTestResources init wrapper javadoc buildEnvironment module:buildEnvironment components module:components model module:model projects module:projects properties module:properties tasks module:tasks dashed-module:buildEnvironment dashed-module:components dashed-module:model dashed-module:projects dashed-module:properties dashed-module:tasks check test syntastic install justSomeTask'
+    assertEquals "$exp" "$result"
 }
 
 test__should_get_cmdline_flags_from_help_string() {
@@ -159,8 +163,18 @@ test__should_overwrite_cache_with_the_same_path() {
 # Reading Cache
 #------------------------------------------------------------
 
-test__should_hide_commands_with_dash__when_reading_cache_for_task() {
+test__should_hide_flags_when_reading_cache_for_task() {
     tasks='testA testB btest module:project'
+    commands="$tasks -h -? --help --version"
+    writeTasksToCache "$commands"
+
+    result=$(getCommandsForCurrentDirFromCache)
+
+    assertEquals "$tasks" "$result"
+}
+
+test__should_show_dashed_tasks() {
+    tasks='testA testB btest test-api test-bl module:project'
     commands="$tasks -h -? --help --version"
     writeTasksToCache "$commands"
 

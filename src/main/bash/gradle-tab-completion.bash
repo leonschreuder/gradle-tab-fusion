@@ -2,11 +2,20 @@
 # https://gist.github.com/nolanlawson/8694399/      # Initial Gist
 # https://github.com/eriwen/gradle-completion       # Other completion engine I found later
 
-CASHE_FILE="$HOME/.gradle/.gradle_completion_cash"
 
+CASHE_FILE=".gradle/.gradle_completion_cash"
 
-#TODO:
-# - test gitbash & cygwin support
+if [ -n "$GRADLE_USER_HOME" ] ; then
+    CASHE_FILE="$GRADLE_USER_HOME/$CASHE_FILE"
+else
+    if [[ $(uname) = MINGW* || $(uname) = CYGWIN* ]] ; then
+        # On windows (gitbash or cygwin)
+        CASHE_FILE="$USERPROFILE/$CASHE_FILE"
+    else
+        # Some sys-admins like to set home somewhere special, so try it last
+        CASHE_FILE="$HOME/$CASHE_FILE"
+    fi
+fi
 
 
 # Main
@@ -29,6 +38,8 @@ setCompletionFor() {
     local prev="$1"
     local cur="$2"
     local commands="$3"
+
+    # >&2 echo -e "\nprev=$prev cur=$cur commands=$commands"
 
     case "$prev" in
         # Commands followed by a file-path
@@ -119,7 +130,7 @@ buildCache() {
 }
 
 requestTasksFromGradle() {
-    local outputOfTasksCommand=$($(getGradleCommand) tasks --console plain --all --quiet)
+    local outputOfTasksCommand=$($(getGradleCommand) tasks --console plain --all --quiet --offline)
     echo $(parseOutputOfTasksCommand "$outputOfTasksCommand")
 }
 
@@ -131,7 +142,7 @@ parseOutputOfTasksCommand() {
     while read -r line || [[ -n $line ]]; do
         if [[ $line == "--"* && $lastLineEmpty == 0 ]]; then
             readingTasks=1
-        elif [[ $line == '' ]]; then
+        elif [[ $line != *[![:space:]]* ]]; then
             readingTasks=0
             lastLineEmpty=1
         else
@@ -205,8 +216,9 @@ getCommandsForCurrentDirFromCache() {
             # The user typed a double dash already, completion will filter the single-dashed results out
         fi
     else
-        commands=${commands//-*/}
+        commands=${commands// -*/}
     fi
+    # >&2 echo -e "\n commands=$commands"
 
     echo $commands
 }
@@ -251,6 +263,16 @@ filterSingleDashCommands() {
     echo $result
 }
 
+# Should be available by default but was missing in git-bash.
+__ltrim_colon_completions() {
+    if [[ "$1" == *:* && ( ${BASH_VERSINFO[0]} -lt 4 || ( ${BASH_VERSINFO[0]} -ge 4 && "$COMP_WORDBREAKS" == *:* ) ) ]]; then
+        local colon_word=${1%${1##*:}};
+        local i=${#COMPREPLY[*]};
+        while [ $((--i)) -ge 0 ]; do
+            COMPREPLY[$i]=${COMPREPLY[$i]#"$colon_word"};
+        done;
+    fi
+}
 
 
 # Define the completion
