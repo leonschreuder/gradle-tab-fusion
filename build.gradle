@@ -1,5 +1,5 @@
 group 'de.leonmoll.gradle'
-version '1.0-SNAPSHOT'
+version '0.1-SNAPSHOT'
 
 buildscript {
     ext.kotlin_version = '1.1.2'
@@ -10,12 +10,12 @@ buildscript {
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "de.leonmoll.gradle:taskcache:1.0-SNAPSHOT"
+        classpath "de.leonmoll.gradle:gradle-tab-fusion:0.1-SNAPSHOT"
     }
 }
 
 apply plugin: 'kotlin'
-apply plugin: 'de.leonmoll.gradle.taskcache'
+apply plugin: 'de.leonmoll.gradle.gradle-tab-fusion'
 
 apply plugin: 'maven'
 
