@@ -5,7 +5,7 @@
 
 _TASKS_CACHE_FILE="tasks.cache"
 _COMMANDLINEFLAGS_CACHE_FILE="cmdlineflags.cache"
-_BUILD_FOLDER="build"   #TODO: Should this be configurable?
+_BUILD_FOLDER="build/completion"   #TODO: Should this be configurable?
 
 
 # Main

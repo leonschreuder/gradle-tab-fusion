@@ -10,6 +10,7 @@ public class FileUtils {
         BufferedWriter bw = null;
         FileWriter fw = null;
 
+
         try {
             fw = new FileWriter(outFile);
             bw = new BufferedWriter(fw);

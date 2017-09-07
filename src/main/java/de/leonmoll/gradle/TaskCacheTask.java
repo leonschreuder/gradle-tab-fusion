@@ -17,6 +17,8 @@ package de.leonmoll.gradle;
 
 import org.gradle.api.Project;
 import org.gradle.api.internal.project.ProjectTaskLister;
+import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.diagnostics.AbstractReportTask;
 import org.gradle.api.tasks.diagnostics.internal.*;
 
@@ -28,6 +30,14 @@ import java.util.List;
 
 public class TaskCacheTask extends AbstractReportTask {
     private static final String TASKS_CACHE_FILE = "tasks.cache";
+    private static final String COMPLETION_DIR = "completion";
+
+    @OutputDirectory
+    File outputDir = new File(getProject().getBuildDir(), COMPLETION_DIR);
+
+    @OutputFile
+    File outputFile = new File(outputDir, TASKS_CACHE_FILE);
+
     //Reference: github.com/gradle/gradle -> TaskReportTask.java
 
     private AggregateMultiProjectTaskReportModel aggregateModel;
@@ -50,8 +60,9 @@ public class TaskCacheTask extends AbstractReportTask {
             }
         }
 
-        File outFile = new File(project.getBuildDir(), TASKS_CACHE_FILE);
-        FileUtils.writeStringToFile(outFile, String.join(" ", taskList));
+        outputDir.mkdirs();
+
+        FileUtils.writeStringToFile(outputFile, String.join(" ", taskList));
 
         //TODO: Completion for rules probably needs more complex logic, implement if actually needed
         //for (Rule rule : project.getTasks().getRules()) {

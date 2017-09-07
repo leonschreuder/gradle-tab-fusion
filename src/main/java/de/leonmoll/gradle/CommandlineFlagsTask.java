@@ -16,6 +16,9 @@
 package de.leonmoll.gradle;
 
 import org.gradle.api.DefaultTask;
+import org.gradle.api.Project;
+import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +30,13 @@ import java.util.List;
 public class CommandlineFlagsTask extends DefaultTask {
 
     private static final String COMMANDLINEFLAGS_CACHE_FILE = "cmdlineflags.cache";
+    private static final String COMPLETION_DIR = "completion";
+
+    @OutputDirectory
+    File outputDir = new File(getProject().getBuildDir(), COMPLETION_DIR);
+
+    @OutputFile
+    File outputFile = new File(outputDir, COMMANDLINEFLAGS_CACHE_FILE);
 
     @TaskAction
     void taskAction() {
@@ -34,8 +44,8 @@ public class CommandlineFlagsTask extends DefaultTask {
 
         List<String> flags = parseHelpOutput(gradleHelpOutput);
 
-        File outFile = new File(getProject().getBuildDir(), COMMANDLINEFLAGS_CACHE_FILE);
-        FileUtils.writeStringToFile(outFile, String.join(" ", flags));
+        outputDir.mkdirs();
+        FileUtils.writeStringToFile(outputFile, String.join(" ", flags));
     }
 
     @NotNull

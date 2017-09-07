@@ -1,5 +1,6 @@
 package de.leonmoll.gradle;
 
+import org.junit.After;
 import org.junit.Test;
 
 import java.io.File;
@@ -11,10 +12,15 @@ import static junit.framework.TestCase.assertEquals;
 
 public class FileUtilsTest {
 
+    @After
+    public void tearDown() {
+        new File("testFile.txt").delete();
+    }
+
     @Test
     public void should_write_string_to_file() throws IOException {
         String input = "--someFlag --someOtherFlag";
-        File tempFile = File.createTempFile("testFile", "txt");
+        File tempFile = new File("testFile.txt");
 
         FileUtils.writeStringToFile(tempFile, input);
 
