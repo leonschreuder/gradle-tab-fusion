@@ -21,6 +21,7 @@ import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.jetbrains.annotations.NotNull;
+import org.gradle.internal.os.OperatingSystem;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -51,10 +52,23 @@ public class CommandlineFlagsTask extends DefaultTask {
     @NotNull
     private ByteArrayOutputStream requestCommandlineHelpOutput() {
         ByteArrayOutputStream cmdOutput = new ByteArrayOutputStream();
-        getProject().exec(execSpec -> {
-            execSpec.executable("./gradlew"); //TODO: support native gradle distribution
-            execSpec.args("--help");
-            execSpec.setStandardOutput(cmdOutput);
+        getProject().exec(exec -> {
+
+            if (OperatingSystem.current().isWindows()) {
+                if (new File(getProject().getProjectDir(), "gradlew.bat").exists()) {
+                    exec.commandLine("cmd", "/c", "gradlew.bat", "--help");
+                } else {
+                    exec.commandLine("cmd", "/c", "gradle", "--help"); //using default installation
+                }
+            } else {
+                if (new File(getProject().getProjectDir(), "gradlew").exists()) {
+                    exec.commandLine("./gradlew", "--help");
+                } else {
+                    exec.commandLine("gradle", "--help");
+                }
+            }
+
+            exec.setStandardOutput(cmdOutput);
         });
         return cmdOutput;
     }

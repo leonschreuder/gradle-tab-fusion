@@ -42,7 +42,6 @@ public class InstallerTaskTest {
         installerTask.wget(InstallerTask.SCRIPT_URL, tmpFileName);
 
         assertTrue(new File(tmpFileName).exists());
-        installerTask.taskAction();
     }
 
 }
