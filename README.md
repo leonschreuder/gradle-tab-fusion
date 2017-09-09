@@ -25,7 +25,7 @@ For every project you want completion for, put this in it's `build.gradle` file:
         }
       }
       dependencies {
-        classpath "gradle.plugin.de.leonmoll.gradle:gradle-tab-fusion:0.1.1"
+        classpath "gradle.plugin.de.leonmoll.gradle:gradle-tab-fusion:0.2.0"
       }
     }
 
