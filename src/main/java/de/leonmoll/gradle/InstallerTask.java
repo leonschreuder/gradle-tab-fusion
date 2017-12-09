@@ -1,8 +1,10 @@
 package de.leonmoll.gradle;
 
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.tasks.TaskAction;
 
+import javax.swing.*;
 import java.io.*;
 import java.net.URL;
 
@@ -12,20 +14,29 @@ public class InstallerTask extends DefaultTask {
     //    -> http://mrhaki.blogspot.de/2010/09/gradle-goodness-get-user-input-values.html
 
     static final String SCRIPT_URL = "https://raw.githubusercontent.com/meonlol/gradle-tab-fusion/master/src/main/bash/gradle-tab-completion.bash";
-    private static final String INSTALLATION_DIRECTORY = "/usr/local/etc/bash_completion.d/gradle-tab-completion.bash";
+    private static final String SCRIPT_NAME = "gradle-tab-completion.bash";
+    private static final String INSTALLATION_DIRECTORY = "/etc/bash_completion.d/";
 
     @TaskAction
     void taskAction() {
-        wget(SCRIPT_URL, INSTALLATION_DIRECTORY);
-        makeExecutable();
-        sourceCompletionScript();
+
+
+        try {
+            File tmpDir = createTempDirectory();
+            wget(SCRIPT_URL, tmpDir + "/" + SCRIPT_NAME);
+            install(tmpDir + "/" + SCRIPT_NAME, INSTALLATION_DIRECTORY);
+            sourceCompletionScript();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     protected void wget(String uri, String fileName) {
+        OutputStream outputStream = null;
         try {
             URL url = new URL(uri);
 
-            OutputStream outputStream = new FileOutputStream(fileName);
+            outputStream = new FileOutputStream(fileName);
             byte[] buffer = new byte[10*1024];
 
             InputStream in = url.openStream();
@@ -34,14 +45,64 @@ public class InstallerTask extends DefaultTask {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            try {
+                outputStream.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    private void makeExecutable() {
+    private void install(String fromPath, String toPath) {
+        String pass = new String(askUserPassword());
+        if (! new File(toPath).exists()) {
+            getProject().exec(exec -> {
+                exec.setStandardInput(new ByteArrayInputStream((pass + "\n").getBytes()));
+                exec.commandLine("sudo", "-S", "mkdir", "-p", toPath);
+            });
+        }
+
         getProject().exec(exec -> {
-            exec.executable("chmod");
-            exec.args("-x", INSTALLATION_DIRECTORY);
+            exec.setStandardInput(new ByteArrayInputStream((pass + "\n").getBytes()));
+            exec.commandLine("sudo", "-S", "mv", fromPath, toPath);
         });
+
+        getProject().exec(exec -> {
+            exec.setStandardInput(new ByteArrayInputStream((pass + "\n").getBytes()));
+            exec.commandLine("sudo", "-S", "chmod", "-x", INSTALLATION_DIRECTORY);
+        });
+    }
+
+    private char[] askUserPassword() {
+        System.out.println("--- Please input password to install ---");
+        Console console = System.console();
+        if (console != null) {
+            return console.readPassword();
+        } else {
+            JPasswordField passwordField = new JPasswordField(10);
+            int action = JOptionPane.showConfirmDialog(null, passwordField, "Please input password to install.", JOptionPane.OK_CANCEL_OPTION);
+            if (action > 0) {
+                throw new GradleException("Unable to install without system password.");
+            }
+            return passwordField.getPassword();
+        }
+    }
+
+    public static File createTempDirectory() throws IOException {
+        final File temp;
+
+        temp = File.createTempFile("temp", Long.toString(System.nanoTime()));
+
+        if(!(temp.delete())) {
+            throw new IOException("Could not delete temp file: " + temp.getAbsolutePath());
+        }
+
+        if(!(temp.mkdir())) {
+            throw new IOException("Could not create temp directory: " + temp.getAbsolutePath());
+        }
+
+        return (temp);
     }
 
     private void sourceCompletionScript() {
